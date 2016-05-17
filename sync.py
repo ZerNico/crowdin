@@ -3,22 +3,13 @@
 # crowdin_sync.py
 #
 # Updates Crowdin source translations and pushes translations
-# directly to PAC-ROM's Gerrit.
+# to AOSiP's Gerrit Code Review
 #
 # Copyright (C) 2014-2015 The CyanogenMod Project
 # This code has been modified. Portions copyright (C) 2016, The PAC-ROM Project
+# Copyright (C) 2018-2019 AOSiP
+# SPDX-License-Identifier: Apache-2.0
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # ################################# IMPORTS ################################## #
 
@@ -54,7 +45,7 @@ def run_subprocess(cmd, silent=False):
     return comm, exit_code
 
 
-def push_as_commit(base_path, path, name, branch, username):
+def push_as_commit(base_path, path, name, branch):
     print('Committing %s on branch %s' % (name, branch))
 
     # Get path
@@ -83,8 +74,8 @@ def push_as_commit(base_path, path, name, branch, username):
 
     # Push commit
     try:
-        repo.git.push('ssh://%s@review.pac-rom.com:29418/%s' % (username, name),
-                      'HEAD:refs/drafts/%s%%topic=translation_PAC' % branch)
+        repo.git.push('ssh://localhost:29418/AOSIP/%s' % (name),
+                      'HEAD:refs/for/pie/translations')
         print('Successfully pushed commit for %s' % name)
     except:
         print('Failed to push commit for %s' % name, file=sys.stderr)
@@ -109,16 +100,12 @@ def find_xml(base_path):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Synchronising PAC-ROM's translations with Crowdin")
+        description="Synchronising AOSiP's translations with Crowdin")
     sync = parser.add_mutually_exclusive_group()
-    parser.add_argument('-u', '--username', help='Gerrit username',
-                        required=True)
-    parser.add_argument('-b', '--branch', help='PAC-ROM branch',
-                        required=True)
     sync.add_argument('--no-upload', action='store_true',
-                      help='Only download PAC-ROM translations from Crowdin')
+                      help='Only download AOSiP translations from Crowdin')
     sync.add_argument('--no-download', action='store_true',
-                      help='Only upload PAC-ROM source translations to Crowdin')
+                      help='Only upload AOSiP source translations to Crowdin')
     return parser.parse_args()
 
 # ################################# PREPARE ################################## #
@@ -146,7 +133,7 @@ def load_xml(x):
 
 
 def check_files(branch):
-    files = ['%s/crowdin/crowdin_%s.yaml' % (_DIR, branch)]
+    files = ['%s/%s.yaml' % (_DIR, branch)]
     for f in files:
         if not os.path.isfile(f):
             print('You have no %s.' % f, file=sys.stderr)
@@ -163,18 +150,18 @@ def upload_crowdin(branch, no_upload=False):
 
     print('\nUploading Crowdin source translations')
     check_run(['crowdin-cli',
-               '--config=%s/crowdin/crowdin_%s.yaml' % (_DIR, branch),
+               '--config=%s/%s.yaml' % (_DIR, branch),
                'upload', 'sources'])
 
 
-def download_crowdin(base_path, branch, xml, username, no_download=False):
+def download_crowdin(base_path, branch, xml, no_download=False):
     if no_download:
         print('Skipping translations download')
         return
 
     print('\nDownloading Crowdin translations')
     check_run(['crowdin-cli',
-               '--config=%s/crowdin/crowdin_%s.yaml' % (_DIR, branch),
+               '--config=%s/%s.yaml' % (_DIR, branch),
                'download', '--ignore-match'])
 
 
@@ -202,7 +189,7 @@ def download_crowdin(base_path, branch, xml, username, no_download=False):
     print('\nCreating a list of pushable translations')
     # Get all files that Crowdin pushed
     paths = []
-    files = [('%s/crowdin/crowdin_%s.yaml' % (_DIR, branch))]
+    files = [('%s/%s.yaml' % (_DIR, branch))]
     for c in files:
         cmd = ['crowdin-cli', '--config=%s' % c, 'list', 'sources']
         comm, ret = run_subprocess(cmd)
@@ -211,8 +198,8 @@ def download_crowdin(base_path, branch, xml, username, no_download=False):
         for p in str(comm[0]).split("\n"):
             paths.append(p.replace('/%s' % branch, ''))
 
-    print('\nUploading translations to Gerrit')
-    xml_android = load_xml(x='%s/pac-rom/default.xml' % base_path)
+    print('\nUploading translations to Github')
+    xml_android = load_xml(x='%s/manifest/snippets/aosip.xml' % base_path)
     items = xml_android.getElementsByTagName('project')
     #items = [x for sub in xml for x in sub.getElementsByTagName('project')]
     all_projects = []
@@ -241,7 +228,7 @@ def download_crowdin(base_path, branch, xml, username, no_download=False):
         # project in all_projects and check if it's already in there.
         all_projects.append(result)
 
-        # Search android/default.xml or crowdin/extra_packages_%(branch).xml
+        # Search android/crowdin.xml or crowdin/extra_packages_%(branch).xml
         # for the project's name
         for project in items:
             path = project.attributes['path'].value
@@ -256,30 +243,30 @@ def download_crowdin(base_path, branch, xml, username, no_download=False):
             br = project.getAttribute('revision') or branch
 
             push_as_commit(base_path, result,
-                           project.getAttribute('name'), br, username)
+                           project.getAttribute('name'), br)
             break
 
 
 def main():
     args = parse_args()
-    default_branch = args.branch
+    default_branch = 'pie'
 
-    base_path = os.getenv('PAC_CROWDIN_BASE_PATH')
+    base_path = os.getenv('AOSIP_CROWDIN_BASE_PATH')
     if base_path is None:
         cwd = os.getcwd()
-        print('You have not set PAC_CROWDIN_BASE_PATH. Defaulting to %s' % cwd)
+        print('You have not set AOSIP_CROWDIN_BASE_PATH. Defaulting to %s' % cwd)
         base_path = cwd
     else:
         base_path = os.path.join(os.path.realpath(base_path))
     if not os.path.isdir(base_path):
-        print('PAC_CROWDIN_BASE_PATH + branch is not a real directory: c'
+        print('AOSIP_CROWDIN_BASE_PATH + branch is not a real directory: c'
               % base_path)
         sys.exit(1)
 
     if not check_dependencies():
         sys.exit(1)
 
-    xml_android = load_xml(x='%s/pac-rom/default.xml' % base_path)
+    xml_android = load_xml(x='%s/manifest/snippets/aosip.xml' % base_path)
     if xml_android is None:
         sys.exit(1)
 
@@ -287,8 +274,7 @@ def main():
         sys.exit(1)
 
     upload_crowdin(default_branch, args.no_upload)
-    download_crowdin(base_path, default_branch, (xml_android),
-                     args.username, args.no_download)
+    download_crowdin(base_path, default_branch, (xml_android), args.no_download)
     print('\nDone!')
 
 if __name__ == '__main__':
