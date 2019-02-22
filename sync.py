@@ -72,11 +72,16 @@ def push_as_commit(base_path, path, name, branch):
               % name, file=sys.stderr)
         return
 
-    # Push commit
+    # List of repositories not on gerrit
+    non_gerrit_repos = ['device_oneplus_sdm845-common']
+
+    # Push commit (destination branch depends on whether repo is on gerrit or not)
     try:
-        repo.git.push('ssh://localhost:29418/AOSIP/%s' % (name),
-                      'HEAD:refs/for/pie/translations')
-        print('Successfully pushed commit for %s' % name)
+        if name in non_gerrit_repos:
+            repo.git.push('gerrit', 'HEAD:pie')
+        else:
+            repo.git.push('gerrit', 'HEAD:refs/for/pie/translations')
+        print('Successfully pushed commit for %s' % name)            
     except:
         print('Failed to push commit for %s' % name, file=sys.stderr)
 
@@ -199,7 +204,7 @@ def download_crowdin(base_path, branch, xml, no_download=False):
             paths.append(p.replace('/%s' % branch, ''))
 
     print('\nUploading translations to Github')
-    xml_android = load_xml(x='%s/manifest/snippets/aosip.xml' % base_path)
+    xml_android = load_xml(x='%s/manifest/crowdin.xml' % base_path)
     items = xml_android.getElementsByTagName('project')
     #items = [x for sub in xml for x in sub.getElementsByTagName('project')]
     all_projects = []
@@ -266,7 +271,7 @@ def main():
     if not check_dependencies():
         sys.exit(1)
 
-    xml_android = load_xml(x='%s/manifest/snippets/aosip.xml' % base_path)
+    xml_android = load_xml(x='%s/manifest/crowdin.xml' % base_path)
     if xml_android is None:
         sys.exit(1)
 
