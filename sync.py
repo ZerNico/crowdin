@@ -73,7 +73,7 @@ def push_as_commit(base_path, path, name, branch):
         return
 
     # List of repositories not on gerrit
-    non_gerrit_repos = ['device_oneplus_sdm845-common']
+    non_gerrit_repos = ['AOSIP-Devices/device_oneplus_sdm845-common']
 
     # Push commit (destination branch depends on whether repo is on gerrit or not)
     try:
@@ -81,7 +81,7 @@ def push_as_commit(base_path, path, name, branch):
             repo.git.push('gerrit', 'HEAD:pie')
         else:
             repo.git.push('gerrit', 'HEAD:refs/for/pie/translations')
-        print('Successfully pushed commit for %s' % name)            
+        print('Successfully pushed commit for %s' % name)
     except:
         print('Failed to push commit for %s' % name, file=sys.stderr)
 
