@@ -78,9 +78,9 @@ def push_as_commit(base_path, path, name, branch):
     # Push commit (destination branch depends on whether repo is on gerrit or not)
     try:
         if name in non_gerrit_repos:
-            repo.git.push('gerrit', 'HEAD:pie')
+            repo.git.push(f'ssh://git@github.com/{name}', 'HEAD:pie')
         else:
-            repo.git.push('gerrit', 'HEAD:refs/for/pie/translations')
+            repo.git.push(f'ssh://review.aosiprom.com:29418/{name}', 'HEAD:refs/for/pie/translations')
         print('Successfully pushed commit for %s' % name)
     except:
         print('Failed to push commit for %s' % name, file=sys.stderr)
