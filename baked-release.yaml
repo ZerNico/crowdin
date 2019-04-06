@@ -1,21 +1,21 @@
 # pie.yaml
 #
-# Crowdin configuration file for AOSiP
+# Crowdin configuration file for POSP
 #
 # Copyright (C) 2016, The PAC-ROM Project
 # Copyright (C) 2018, AOSiP
 #
 # SPDX-License-Identifier: Apache-2.0
 
-api_key: <%= ENV['AOSIP_CROWDIN_API_KEY'] %>
-base_path: <%= ENV['AOSIP_CROWDIN_BASE_PATH'] %>
-project_identifier: illusionproject
+api_key: <%= ENV['POTATO_CROWDIN_API_KEY'] %>
+base_path: <%= ENV['POTATO_CROWDIN_BASE_PATH'] %>
+project_identifier: POSP
 preserve_hierarchy: true
 
 files:
-# Default for AOSiP
+# Default for POSP
   -
-    source:      '/**/values/aosip_strings.xml'
+    source:      '/**/values/potato_strings.xml'
     translation: '/%original_path%-%android_code%/%original_file_name%'
     languages_mapping: &anchor
       android_code:
@@ -107,7 +107,7 @@ files:
         zu: zu
 
   -
-    source:      '/packages/apps/OwlsNest/res/values/strings.xml'
+    source:      '/packages/apps/Fries/res/values/strings.xml'
     translation: '/%original_path%-%android_code%/%original_file_name%'
     languages_mapping: *anchor
 
