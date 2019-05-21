@@ -73,7 +73,7 @@ def push_as_commit(base_path, path, name, branch):
         return
 
     # List of repositories not on gerrit
-    non_gerrit_repos = ['AOSIP-Devices/device_oneplus_sdm845-common']
+    non_gerrit_repos = ()
 
     # Push commit (destination branch depends on whether repo is on gerrit or not)
     try:
