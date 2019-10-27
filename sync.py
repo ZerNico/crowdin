@@ -78,9 +78,9 @@ def push_as_commit(base_path, path, name, branch):
     # Push commit (destination branch depends on whether repo is on gerrit or not)
     try:
         if name in non_gerrit_repos:
-            repo.git.push(f'ssh://git@github.com/{name}', 'HEAD:baked-release')
+            repo.git.push(f'ssh://git@github.com/{name}', 'HEAD:croquette-release')
         else:
-            repo.git.push(f'ssh://review.potatoproject.co:29418/{name}', 'HEAD:refs/for/baked-release/translations')
+            repo.git.push(f'ssh://review.potatoproject.co:29418/{name}', 'HEAD:refs/for/croquette-release/translations')
         print('Successfully pushed commit for %s' % name)
     except:
         print('Failed to push commit for %s' % name, file=sys.stderr)
@@ -254,7 +254,7 @@ def download_crowdin(base_path, branch, xml, no_download=False):
 
 def main():
     args = parse_args()
-    default_branch = 'baked-release'
+    default_branch = 'croquette-release'
 
     base_path = os.getenv('POTATO_CROWDIN_BASE_PATH')
     if base_path is None:
